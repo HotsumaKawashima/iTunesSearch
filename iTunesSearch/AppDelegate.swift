@@ -20,6 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         
         // Set up cache
+        URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 100 * 1024 * 1024, diskPath: "tempCache")
         
         return true
     }

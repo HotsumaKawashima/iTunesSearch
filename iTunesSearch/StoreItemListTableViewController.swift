@@ -7,8 +7,9 @@ class StoreItemListTableViewController: UITableViewController {
     @IBOutlet var filterSegmentedControl: UISegmentedControl!
     
     // add item controller property
+    var jsonController = JsonController()
     
-    var items = [String]()
+    var items = [JsonScheme.StoreItem]()
     
     let queryOptions = ["movie", "music", "software", "ebook"]
     
@@ -28,10 +29,25 @@ class StoreItemListTableViewController: UITableViewController {
         if !searchTerm.isEmpty {
             
             // set up query dictionary
+            let query = [
+                "term": searchTerm,
+                "media": mediaType,
+                "lang": "en_us"
+             ]
             
             // use the item controller to fetch items
             // if successful, use the main queue to set self.items and reload the table view
             // otherwise, print an error to the console
+            jsonController.fetchItems(matching: query) { (json) in
+                DispatchQueue.main.async {
+                    if let json = json {
+                        self.items = json.results
+                        self.tableView.reloadData()
+                    } else {
+                        print("error")
+                    }
+                }
+            }
         }
     }
     
@@ -39,15 +55,27 @@ class StoreItemListTableViewController: UITableViewController {
         
         let item = items[indexPath.row]
         
-        cell.textLabel?.text = item
         
         // set label to the item's name
+        cell.textLabel?.text = item.trackName
+        
         // set detail label to the item's subtitle
+        cell.detailTextLabel?.text = item.artistName
+        
         // reset the image view to the gray image
+        cell.imageView?.image = UIImage(named: "gray")
         
         // initialize a network task to fetch the item's artwork
         // if successful, use the main queue capture the cell, to initialize a UIImage, and set the cell's image view's image to the 
         // resume the task
+        let task = URLSession.shared.dataTask(with: item.artworkUrl100) { (data, response, error) in
+            DispatchQueue.main.async {
+                if let data = data {
+                    cell.imageView?.image = UIImage(data: data)
+                }
+            }
+        }
+        task.resume()
     }
     
     @IBAction func filterOptionUpdated(_ sender: UISegmentedControl) {
